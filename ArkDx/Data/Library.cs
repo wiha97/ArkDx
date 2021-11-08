@@ -37,7 +37,7 @@ namespace ArkDx.Data
             }
             if (IsNewFile(sPath))
             {
-                FillFile(sPath, 30, null);
+                FillFile(sPath, 29, null);
             }
         }
 

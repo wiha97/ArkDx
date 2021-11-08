@@ -109,19 +109,30 @@ namespace ArkDx
 
         private void spCheck_Checked(object sender, RoutedEventArgs e)
         {
+            int idx = medalCombo.SelectedIndex;
             Settings.MedalSource = @"Library\spmedals.txt";
             medalCombo.ItemsSource = File.ReadAllLines(Settings.MedalSource);
+            medalCombo.SelectedIndex = idx;
         }
 
         private void spCheck_Unchecked(object sender, RoutedEventArgs e)
         {
+            int idx = medalCombo.SelectedIndex;
             Settings.MedalSource = @"Library\mpmedals.txt";
             medalCombo.ItemsSource = File.ReadAllLines(Settings.MedalSource);
+            medalCombo.SelectedIndex = idx;
         }
 
         private void medalCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            medalBox.Text = medalCombo.SelectedItem.ToString();
+            try
+            {
+                medalBox.Text = medalCombo.SelectedItem.ToString();
+            }
+            catch
+            {
+
+            }
         }
 
         private void medalBtn_Click(object sender, RoutedEventArgs e)
