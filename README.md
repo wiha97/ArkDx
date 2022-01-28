@@ -1,4 +1,4 @@
 # ArkDx
-Overengineered filemanager to fix an issue with Halo MCC that 343 didn't bother with
+Filemanager that automatically backs up Halo MCC replay and report files
 
 <img src="https://i.imgur.com/YRW3bMg.png" width="500px"/>

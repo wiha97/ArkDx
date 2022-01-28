@@ -18,22 +18,22 @@ namespace ArkDx.Logic
         {
             ConcurrentBag<Film> filmBag = new ConcurrentBag<Film>();
             string game = Path.GetFileName(path);
-            if (path.Contains("AppData"))
+            try
             {
-                if (Settings.MultiThreading)
+                if (path.Contains("AppData"))
                 {
-                    MultiThreadFilms(path + @"\Movie", filmBag, reports, game, true);
+                    if (Settings.MultiThreading)
+                    {
+                        MultiThreadFilms(path + @"\Movie", filmBag, reports, game, true);
+                    }
+                    else
+                    {
+                        SingleThreadFilms(path + @"\Movie", filmBag, reports, game, true);
+                    }
                 }
                 else
                 {
-                    SingleThreadFilms(path + @"\Movie", filmBag, reports, game, true);
-                }
-            }
-            else
-            {
-                foreach (string yr in Directory.GetDirectories(path))
-                {
-                    try
+                    foreach (string yr in Directory.GetDirectories(path))
                     {
                         if (Settings.MultiThreading)
                         {
@@ -50,13 +50,13 @@ namespace ArkDx.Logic
                             }
                         }
                     }
-                    catch (Exception e)
-                    {
-
-                    }
                 }
             }
-            if(shisno.ShisnoBag.Count() > 0)
+            catch (Exception e)
+            {
+                shisno.ShisnoBag.Add($"Failed to get films:\n{e.Message}");
+            }
+            if (shisno.ShisnoBag.Count() > 0)
             {
                 shisno.LogErrors();
             }
@@ -122,7 +122,7 @@ namespace ArkDx.Logic
                                     {
                                         try
                                         {
-                                            report = carnage.GetCarnage(rep, Settings.GamerTag);
+                                            report = carnage.GetCarnage(rep, Settings.GamerTag, shisno);
                                             time = report.Time;
                                             if (report.Time > TimeSpan.FromMinutes(1))
                                             {
@@ -131,7 +131,7 @@ namespace ArkDx.Logic
                                         }
                                         catch (Exception e)
                                         {
-                                            shisno.ShisnoBag.Add(e.Message);
+                                            shisno.ShisnoBag.Add($"Failed to add report:\n{e.Message}");
                                         }
                                     }
                                 }
@@ -178,7 +178,7 @@ namespace ArkDx.Logic
                 }
                 catch (Exception e)
                 {
-                    shisno.ShisnoBag.Add(e.Message);
+                    shisno.ShisnoBag.Add($"Failed to add film:\n{e.Message}");
                 }
             }
             else
@@ -209,7 +209,7 @@ namespace ArkDx.Logic
             }
             catch (Exception e)
             {
-                shisno.ShisnoBag.Add(e.Message);
+                shisno.ShisnoBag.Add($"Failed to add clip:\n{e.Message}");
             }
             return clips;
         }

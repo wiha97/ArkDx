@@ -562,29 +562,38 @@ namespace ArkDx.WPF
             ListView blues = new ListView();
             ListView grif = new ListView();
             ListView green = new ListView();
-            string name = "";
+            TextBlock name = new TextBlock();
+            name.Foreground = color.White();
+            //name.Content = "";
             if (rep.Players.GroupBy(p => p.Team).Count() > 1)
             {
                 foreach (Player player in rep.Players)
                 {
-                    name = PlayerNameCheck(rep, player, name);
-                    switch (player.Team)
+                    try
                     {
-                        case "Red":
-                            reds.Items.Add(name);
-                            break;
-                        case "Blue":
-                            blues.Items.Add(name);
-                            break;
-                        case "Orange":
-                            grif.Items.Add(name);
-                            break;
-                        case "Green":
-                            green.Items.Add(name);
-                            break;
-                        default:
-                            players.Items.Add(name);
-                            break;
+                        name = PlayerNameCheck(rep, player);
+                        switch (player.Team)
+                        {
+                            case "Red":
+                                reds.Items.Add(name);
+                                break;
+                            case "Blue":
+                                blues.Items.Add(name);
+                                break;
+                            case "Orange":
+                                grif.Items.Add(name);
+                                break;
+                            case "Green":
+                                green.Items.Add(name);
+                                break;
+                            default:
+                                players.Items.Add(name);
+                                break;
+                        }
+                    }
+                    catch(Exception e)
+                    {
+
                     }
                 }
                 reds.Background = color.Red();
@@ -609,23 +618,25 @@ namespace ArkDx.WPF
                 players.Foreground = color.White();
                 foreach (Player player in rep.Players)
                 {
-                    name = PlayerNameCheck(rep, player, name);
-                    players.Items.Add(name);
+                    name = PlayerNameCheck(rep, player);
+                    players.Items.Add(PlayerNameCheck(rep, player));
                 }
                 mainPanel.Children.Add(players);
             }
             return mainPanel;
         }
 
-        string PlayerNameCheck(Carnage rep, Player player, string name)
+        TextBlock PlayerNameCheck(Carnage rep, Player player)
         {
+            TextBlock name = new TextBlock();
+            if (!player.Finished) { name.Opacity = 0.6; }
             if (player.GamerTag == Settings.GamerTag)
             {
-                name = "You";
+                name.Text = "You";
             }
             else
             {
-                name = player.GamerTag;
+                name.Text = player.GamerTag;
             }
             return name;
         }

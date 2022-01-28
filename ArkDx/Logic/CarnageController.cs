@@ -53,7 +53,7 @@ namespace ArkDx.Logic
             }
         }
 
-        void XmlShortener(string file, string player)                       //  Shortens XML by removing un-earned medals. -360> lines per player
+        void XmlShortener(string file, string player)                       //  Shortens XML by removing un-earned medals. Hundreds of lines per player
         {
             XDocument doc = XDocument.Load(file);
             List<XElement> players = doc.Root.Element("Players").Elements(player).ToList();
@@ -72,10 +72,11 @@ namespace ArkDx.Logic
             doc.Save(file);
         }
 
-        public Carnage GetCarnage(string file, string gt)                   //  Checks if the carnage report is of type campaign/firefight(PVE) or Multiplayer(PVP), different formats in the file
+        public Carnage GetCarnage(string file, string gt, Shisno shis)                   //  Checks if the carnage report is of type campaign/firefight(PVE) or Multiplayer(PVP), different formats in the file
         {
             try
             {
+                shisno = shis;
                 switch (file)
                 {
                     case string f when f.Contains("mpc"):
@@ -86,7 +87,7 @@ namespace ArkDx.Logic
                         return null;
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 shisno.ShisnoBag.Add(e.Message);
                 return null;
@@ -159,37 +160,45 @@ namespace ArkDx.Logic
 
         List<Player> Players(List<XElement> xPlayers, string medals)
         {
+            string gamerTag = "GamertagText";
+            string mKills = "mKillCount";
+            string mDeaths = "mDeathCount";
+            bool isMP = false;
             List<Player> players = new List<Player>();
+            //  If attribute "mGamertagText" exists, then it's assumed that the report is from PVP Multiplayer and not Campaign or Firefight
+            if (xPlayers[0].Attribute("mGamertagText") != null)
+            {
+                gamerTag = "mGamertagText";
+                mKills = "mKills";
+                mDeaths = "mDeaths";
+                isMP = true;
+            }
+
             foreach (XElement player in xPlayers)
             {
                 string team = "-1";
                 int spree = 0;
                 int assists = 0;
                 string nemesis = null;
-                string gamerTag = "GamertagText";
-                string mKills = "mKillCount";
-                string mDeaths = "mDeathCount";
+                bool finish = false;
                 try
                 {
-                    //  If attribute "mGamertagText" exists, then it's assumed that the report is from PVP Multiplayer and not Campaign or Firefight
-                    if (player.Attribute("mGamertagText") != null)
+                    if (isMP)
                     {
-                        gamerTag = "mGamertagText";
                         assists = int.Parse(player.Attribute("mAssists").Value);
-                        if(int.Parse(player.Attribute("mKilledMostPlayerIndex").Value) >= 0)
+                        if (int.Parse(player.Attribute("mKilledMostPlayerIndex").Value) >= 0)
                         {
                             nemesis = xPlayers[int.Parse(player.Attribute("mKilledMostPlayerIndex").Value)]
                                 .Attribute("mGamertagText").Value;
                         }
-                        mKills = "mKills";
-                        mDeaths = "mDeaths";
                         team = player.Attribute("mTeamId").Value;
                         spree = int.Parse(player.Attribute("mMostKillsInARow").Value);
+                        if (player.Attribute("mCompletedGame").Value == "1") { finish = true; }
                     }
                     int kills = int.Parse(player.Attribute(mKills).Value);
                     int deaths = int.Parse(player.Attribute(mDeaths).Value);
                     float kdr = 0;
-                    if(kills > 0)
+                    if (kills > 0)
                     {
                         if (deaths > 0)
                             kdr = (float)kills / (float)deaths;
@@ -208,13 +217,14 @@ namespace ArkDx.Logic
                         Deaths = deaths,
                         Medals = Medals(medals, player),
                         Kdr = kdr.ToString("0.00"),
+                        Finished = finish,
                         Nemesis = nemesis,
                         Assists = assists
                     });
                 }
                 catch (Exception e)
                 {
-
+                    shisno.ShisnoBag.Add($"Failed to add player:\n{e.Message}");
                 }
             }
             return players;

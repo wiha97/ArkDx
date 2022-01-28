@@ -16,6 +16,7 @@ namespace ArkDx.Models
         public string Nemesis { get; set; }         //  Index of the nemesis
         public string Score { get; set; }
         public string Team { get; set; }
+        public bool Finished { get; set; }
         public List<Medal> Medals { get; set; }
         
     }
