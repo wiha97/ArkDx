@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Media;
 
 namespace ArkDx.WPF
@@ -66,12 +67,12 @@ namespace ArkDx.WPF
             if (win.multiBox.IsChecked == true)
                 thread = true;
             Settings.ApplySettings(
-                Convert.ToInt32(win.appSlide.Value), 
-                win.pathBox.Text, 
-                win.gtBox.Text, 
-                Convert.ToInt32(win.fileSizeSlide.Value), 
-                win.urlBox.Text, 
-                thread, 
+                Convert.ToInt32(win.appSlide.Value),
+                win.pathBox.Text,
+                win.gtBox.Text,
+                Convert.ToInt32(win.fileSizeSlide.Value),
+                win.urlBox.Text,
+                thread,
                 auto
                 );
         }
@@ -494,8 +495,6 @@ namespace ArkDx.WPF
                 foreach (Medal medal in report.Player.Medals.OrderByDescending(m => m.Group))
                 {
                     string mdl = $"{medal.Count}x {medal.Name}";
-                    //if (medal.Group != null)
-                    //    mdl += string.Format(" <{0}>", medal.Group);
                     medals.Items.Add(mdl);
                 }
                 expander.Content = medals;
@@ -554,91 +553,82 @@ namespace ArkDx.WPF
 
         private StackPanel Players(Carnage rep)
         {
-            StackPanel mainPanel = new StackPanel();
-            DockPanel topPan = new DockPanel();
-            DockPanel botPan = new DockPanel();
-            ListView players = new ListView();
-            ListView reds = new ListView();
-            ListView blues = new ListView();
-            ListView grif = new ListView();
-            ListView green = new ListView();
-            TextBlock name = new TextBlock();
-            name.Foreground = color.White();
-            //name.Content = "";
-            if (rep.Players.GroupBy(p => p.Team).Count() > 1)
+            try
             {
-                foreach (Player player in rep.Players)
-                {
-                    try
-                    {
-                        name = PlayerNameCheck(rep, player);
-                        switch (player.Team)
-                        {
-                            case "Red":
-                                reds.Items.Add(name);
-                                break;
-                            case "Blue":
-                                blues.Items.Add(name);
-                                break;
-                            case "Orange":
-                                grif.Items.Add(name);
-                                break;
-                            case "Green":
-                                green.Items.Add(name);
-                                break;
-                            default:
-                                players.Items.Add(name);
-                                break;
-                        }
-                    }
-                    catch(Exception e)
-                    {
+                StackPanel mainPanel = new StackPanel();
 
-                    }
-                }
-                reds.Background = color.Red();
-                reds.Foreground = color.White();
-                blues.Background = color.Blue();
-                blues.Foreground = color.White();
-                grif.Background = color.Orange();
-                grif.Foreground = color.White();
-                green.Background = color.Green();
-                green.Foreground = color.White();
-                topPan.Children.Add(reds);
-                topPan.Children.Add(blues);
-                botPan.Children.Add(grif);
-                botPan.Children.Add(green);
-                mainPanel.Children.Add(topPan);
-                mainPanel.Children.Add(botPan);
-            }
-            else
-            {
-                players.Background = color.DarkGray();
-                players.BorderBrush = color.DarkGray();
-                players.Foreground = color.White();
-                foreach (Player player in rep.Players)
+                foreach (var t in rep.Players.GroupBy(p => p.Team))
                 {
-                    name = PlayerNameCheck(rep, player);
-                    players.Items.Add(PlayerNameCheck(rep, player));
-                }
-                mainPanel.Children.Add(players);
-            }
-            return mainPanel;
-        }
+                    string team = $"{t.Key} team";
+                    if (t.Count() <= 1)
+                        team = $"{t.Key}";
 
-        TextBlock PlayerNameCheck(Carnage rep, Player player)
-        {
-            TextBlock name = new TextBlock();
-            if (!player.Finished) { name.Opacity = 0.6; }
-            if (player.GamerTag == Settings.GamerTag)
-            {
-                name.Text = "You";
+                    GridView view = new GridView();
+                    GridViewColumn gt = new GridViewColumn() { Header = team.ToUpper(), DisplayMemberBinding = new Binding("GT"), Width = 130 };
+                    GridViewColumn score = new GridViewColumn() { DisplayMemberBinding = new Binding("Score"), Width = 30 };
+                    //GridViewColumn kills = new GridViewColumn() { Header = "KILLS", DisplayMemberBinding = new Binding("Score"), Width = 30 };
+                    ListView pList = new ListView();
+                    pList.FontSize = 10;
+
+
+                    pList.Foreground = color.White();
+                    Brush b;
+                    switch (t.Key)
+                    {
+                        case "Red":
+                            b = color.Red();
+                            break;
+                        case "Blue":
+                            b = color.Blue();
+                            break;
+                        case "Orange":
+                            b = color.Orange();
+                            break;
+                        case "Green":
+                            b = color.Green();
+                            break;
+                        default:
+                            b = color.DarkGray();
+                            break;
+                    }
+                    int teamScore = 0;
+                    foreach (Player player in rep.Players.Where(p => p.Team == t.Key))
+                    {
+                        Border border = new Border() { BorderBrush = color.Black() };
+                        teamScore += int.Parse(player.Score);
+
+                        string gtag = player.GamerTag;
+                        if (gtag == Settings.GamerTag) { gtag = "You"; }
+
+                        pList.Items.Add(new ListItem(gtag, player.Score));
+                    }
+
+                    score.Header = teamScore.ToString();
+
+                    Style headerStyle = new Style();
+                    headerStyle.Setters.Add(new Setter(Control.BackgroundProperty, b));
+                    headerStyle.Setters.Add(new Setter(Control.BorderBrushProperty, color.Black()));
+                    headerStyle.Setters.Add(new Setter(Control.ForegroundProperty, color.White()));
+
+                    gt.SetValue(GridViewColumn.HeaderContainerStyleProperty, headerStyle);
+                    score.SetValue(GridViewColumn.HeaderContainerStyleProperty, headerStyle);
+                    view.Columns.Add(gt);
+                    view.Columns.Add(score);
+                    //view.Columns.Add(kills);
+
+                    pList.Background = b;
+                    pList.BorderBrush = b;
+
+
+                    pList.View = view;
+                    mainPanel.Children.Add(pList);
+                }
+                return mainPanel;
             }
-            else
+            catch (Exception e)
             {
-                name.Text = player.GamerTag;
+                return null;
             }
-            return name;
         }
 
         private Expander Enemies(List<Enemy> enemies)
@@ -714,5 +704,18 @@ namespace ArkDx.WPF
                 log.BadLog($"Failed to set audio:\n{e.Message}\nMake sure the file is '.wav'.");
             }
         }
+    }
+
+    public class ListItem
+    {
+        public ListItem(string gt, string score)
+        {
+            GT = gt;
+            Score = score;
+            //Kills = kills;
+        }
+        public string GT { get; set; }
+        public string Score { get; set; }
+        public string Kills { get; set; }
     }
 }
